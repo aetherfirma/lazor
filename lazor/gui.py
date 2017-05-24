@@ -28,6 +28,7 @@ class Application(ttk.Frame):
         self.rowconfigure(6, weight=0)
         self.rowconfigure(7, weight=0)
         self.rowconfigure(8, weight=0)
+        self.rowconfigure(9, weight=0)
         self.columnconfigure(0, weight=0)
         self.columnconfigure(1, weight=1)
         self.columnconfigure(2, weight=0)
@@ -35,10 +36,10 @@ class Application(ttk.Frame):
         ttk.Button(self, text="Open File", command=self.open_file).grid(column=0, row=0)
 
         ttk.Label(self, textvariable=self.filename, relief="sunken", padding="5 5 5 5").grid(column=1, columnspan=2, row=0, sticky=tk.W+tk.E+tk.N+tk.S)
-        ttk.Label(self, textvariable=self.statusbar, relief="sunken", padding="5 5 5 5").grid(column=0, columnspan=3, row=8, sticky=tk.W+tk.E+tk.N+tk.S)
+        ttk.Label(self, textvariable=self.statusbar, relief="sunken", padding="5 5 5 5").grid(column=0, columnspan=3, row=9, sticky=tk.W+tk.E+tk.N+tk.S)
 
         self.canvas = tk.Canvas(self, relief="sunken", bg="white")
-        self.canvas.grid(column=0, columnspan=2, row=1, rowspan=7, sticky=tk.W+tk.E+tk.N+tk.S)
+        self.canvas.grid(column=0, columnspan=2, row=1, rowspan=8, sticky=tk.W+tk.E+tk.N+tk.S)
         self.canvas.bind("<Configure>", self.redraw_on_event)
 
         self.layer_box = tk.Listbox(self, selectmode=tk.EXTENDED)
@@ -50,7 +51,8 @@ class Application(ttk.Frame):
         ttk.Button(self, text="Explode Components", command=self.explode).grid(column=2, row=4)
         ttk.Button(self, text="Combine", command=self.combine).grid(column=2, row=5)
         ttk.Button(self, text="Rename", command=self.rename).grid(column=2, row=6)
-        ttk.Button(self, text="Save As", command=self.save_file).grid(column=2, row=7)
+        ttk.Button(self, text="Delete", command=self.delete).grid(column=2, row=7)
+        ttk.Button(self, text="Save As", command=self.save_file).grid(column=2, row=8)
         self.update_statusbar("Welcome to LAZOR")
 
     def update_statusbar(self, msg):
@@ -286,6 +288,27 @@ class Application(ttk.Frame):
         self.update_layerbox()
         self.update_canvas()
         self.update_statusbar("Renamed '{}' to '{}'".format(old_layer_name, new_layer_name))
+
+    def delete(self):
+        if not self.layers:
+            messagebox.showerror("Cannot delete layers", "You must load a file first")
+            return
+
+        layers = [self.layer_box.get(i) for i in self.layer_box.curselection()]
+        if not layers:
+            messagebox.showerror("Cannot delete layers", "You must select one or more layers to delete")
+            return
+
+        for layer_name in layers:
+            del self.layers[layer_name]
+
+        if len(layers) == 1:
+            self.update_statusbar("Deleted '{}'".format(layers[0]))
+        else:
+            self.update_statusbar("Deleted {} layers".format(len(layers)))
+
+        self.update_canvas()
+        self.update_layerbox()
 
 
 def main():
