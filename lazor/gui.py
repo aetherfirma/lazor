@@ -320,7 +320,3 @@ def main():
 
     app = Application(master=root)
     app.mainloop()
-
-
-if __name__ == "__main__":
-    main()
