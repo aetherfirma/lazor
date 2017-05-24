@@ -47,6 +47,7 @@ class Application(ttk.Frame):
         ttk.Button(self, text="Add Tabs", command=self.tab).grid(column=2, row=3)
         ttk.Button(self, text="Explode Components", command=self.explode).grid(column=2, row=4)
         ttk.Button(self, text="Save As", command=self.save_file).grid(column=2, row=5)
+        self.update_statusbar("Welcome to LAZOR")
 
     def update_statusbar(self, msg):
         self.statusbar.set(msg)
@@ -87,6 +88,7 @@ class Application(ttk.Frame):
 
         self.update_layerbox()
         self.update_canvas()
+        self.update_statusbar("Saved file as {}".format(filename))
 
     def update_layerbox(self):
         self.layer_box.delete(0, tk.END)
@@ -151,8 +153,25 @@ class Application(ttk.Frame):
         if not layers:
             return
 
+        pre_fix = sum([len(self.layers[l]) for l in layers])
+        if len(layers) == 1:
+            self.update_statusbar("Fixing '{}'...".format(layers[0]))
+        else:
+            self.update_statusbar("Fixing {} layers...".format(len(layers)))
+
         for layer in layers:
             self.layers[layer] = join_lines(self.layers[layer])
+
+        post_fix = sum([len(self.layers[l]) for l in layers])
+
+        prefix = "Layer '{}' had".format(layers[0]) if len(layers) == 1 else "Selected layers had"
+
+        self.update_statusbar("{} {} lines, reduced to {} ({}% saving)".format(
+            prefix,
+            pre_fix,
+            post_fix,
+            int((1-(post_fix/pre_fix))*100)
+        ))
 
         self.update_layerbox()
         self.update_canvas()
@@ -164,6 +183,8 @@ class Application(ttk.Frame):
         layers = [self.layer_box.get(i) for i in self.layer_box.curselection()]
         if not layers:
             return
+
+        new_layers = []
 
         for layer_name in layers:
             layer = self.layers[layer_name]
@@ -178,6 +199,7 @@ class Application(ttk.Frame):
 
         self.update_layerbox()
         self.update_canvas()
+        self.update_statusbar("Created {} new layers".format(len(new_layers)))
 
     def tab(self):
         if not self.layers:
@@ -197,10 +219,12 @@ class Application(ttk.Frame):
 
                 self.layers[layer_name] = new_layer
 
-        self.update_canvas()
+        if len(layers) == 1:
+            self.update_statusbar("Added tabs to '{}'".format(layers[0]))
+        else:
+            self.update_statusbar("Added tabs to {} layers".format(len(layers)))
 
-    def noop(self):
-        print("Button pressed")
+        self.update_canvas()
 
 
 def main():
