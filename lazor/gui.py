@@ -1,7 +1,7 @@
 import os
 import tkinter as tk
 from collections import OrderedDict
-from tkinter import ttk, filedialog, messagebox
+from tkinter import ttk, filedialog, messagebox, simpledialog
 
 import ezdxf
 
@@ -25,6 +25,9 @@ class Application(ttk.Frame):
         self.rowconfigure(3, weight=0)
         self.rowconfigure(4, weight=0)
         self.rowconfigure(5, weight=0)
+        self.rowconfigure(6, weight=0)
+        self.rowconfigure(7, weight=0)
+        self.rowconfigure(8, weight=0)
         self.columnconfigure(0, weight=0)
         self.columnconfigure(1, weight=1)
         self.columnconfigure(2, weight=0)
@@ -32,10 +35,10 @@ class Application(ttk.Frame):
         ttk.Button(self, text="Open File", command=self.open_file).grid(column=0, row=0)
 
         ttk.Label(self, textvariable=self.filename, relief="sunken", padding="5 5 5 5").grid(column=1, columnspan=2, row=0, sticky=tk.W+tk.E+tk.N+tk.S)
-        ttk.Label(self, textvariable=self.statusbar, relief="sunken", padding="5 5 5 5").grid(column=0, columnspan=3, row=6, sticky=tk.W+tk.E+tk.N+tk.S)
+        ttk.Label(self, textvariable=self.statusbar, relief="sunken", padding="5 5 5 5").grid(column=0, columnspan=3, row=8, sticky=tk.W+tk.E+tk.N+tk.S)
 
         self.canvas = tk.Canvas(self, relief="sunken", bg="white")
-        self.canvas.grid(column=0, columnspan=2, row=1, rowspan=5, sticky=tk.W+tk.E+tk.N+tk.S)
+        self.canvas.grid(column=0, columnspan=2, row=1, rowspan=7, sticky=tk.W+tk.E+tk.N+tk.S)
         self.canvas.bind("<Configure>", self.redraw_on_event)
 
         self.layer_box = tk.Listbox(self, selectmode=tk.EXTENDED)
@@ -45,7 +48,9 @@ class Application(ttk.Frame):
         ttk.Button(self, text="Autofix", command=self.autofix).grid(column=2, row=2)
         ttk.Button(self, text="Add Tabs", command=self.tab).grid(column=2, row=3)
         ttk.Button(self, text="Explode Components", command=self.explode).grid(column=2, row=4)
-        ttk.Button(self, text="Save As", command=self.save_file).grid(column=2, row=5)
+        ttk.Button(self, text="Combine", command=self.combine).grid(column=2, row=5)
+        ttk.Button(self, text="Rename", command=self.rename).grid(column=2, row=6)
+        ttk.Button(self, text="Save As", command=self.save_file).grid(column=2, row=7)
         self.update_statusbar("Welcome to LAZOR")
 
     def update_statusbar(self, msg):
@@ -234,6 +239,53 @@ class Application(ttk.Frame):
             self.update_statusbar("Added tabs to {} layers".format(len(layers)))
 
         self.update_canvas()
+
+    def combine(self):
+        if not self.layers:
+            messagebox.showerror("Cannot combine layers", "You must load a file first")
+            return
+
+        layers = [self.layer_box.get(i) for i in self.layer_box.curselection()]
+        if len(layers) < 2:
+            messagebox.showerror("Cannot combine layers", "You must select two or more layers to combine")
+            return
+
+        new_layer_name = simpledialog.askstring("New layer name", "Please enter the new layer name", initialvalue=layers[0])
+
+        new_layer = []
+        for layer in (self.layers[l] for l in layers):
+            for line in layer:
+                new_layer.append(line)
+
+        for layer in layers:
+            del self.layers[layer]
+
+        self.layers[new_layer_name] = new_layer
+
+        self.update_layerbox()
+        self.update_canvas()
+        self.update_statusbar("Merged {} layers into '{}'".format(len(layers), new_layer_name))
+
+    def rename(self):
+        if not self.layers:
+            messagebox.showerror("Cannot rename layer", "You must load a file first")
+            return
+
+        layers = [self.layer_box.get(i) for i in self.layer_box.curselection()]
+        if len(layers) != 1:
+            messagebox.showerror("Cannot rename layer", "You must select one layer to rename")
+            return
+
+        old_layer_name = layers[0]
+        new_layer_name = simpledialog.askstring("New layer name", "Please enter the new layer name")
+
+        layer = self.layers[old_layer_name]
+        del self.layers[old_layer_name]
+        self.layers[new_layer_name] = layer
+
+        self.update_layerbox()
+        self.update_canvas()
+        self.update_statusbar("Renamed '{}' to '{}'".format(old_layer_name, new_layer_name))
 
 
 def main():
