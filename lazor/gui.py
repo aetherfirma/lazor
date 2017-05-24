@@ -85,7 +85,7 @@ class Application(ttk.Frame):
             return
 
         initialdir, initialfile = os.path.split(self.filename.get())
-        filename = filedialog.asksaveasfilename(filetypes=[("dxf files", ".dxf")], initialfile=initialfile, initialdir=initialdir)
+        filename = filedialog.asksaveasfilename(filetypes=[("dxf files", ".dxf")], initialfile=initialfile, initialdir=initialdir, defaultextension="dxf")
 
         if not filename:
             self.update_statusbar("Cancelled file save")
