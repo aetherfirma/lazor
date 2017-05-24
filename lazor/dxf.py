@@ -3,15 +3,14 @@ import ezdxf
 from lazor.datastructures import Vec2, Line
 
 
-def draw(*layers):
+def draw(**layers):
     dxf = ezdxf.new("R2007")
     modelspace = dxf.modelspace()
 
-    for layer, lines in enumerate(layers):
-        layer_name = "Layer {}".format(layer)
-        dxf.layers.new(layer_name, dxfattribs={"color": layer})
+    for n, (layer, lines) in enumerate(layers.items()):
+        dxf.layers.new(layer, dxfattribs={"color": n})
         for line in lines:
-            modelspace.add_line(*line, dxfattribs={"layer": layer_name})
+            modelspace.add_line(*line, dxfattribs={"layer": layer})
 
     return dxf
 

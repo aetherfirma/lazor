@@ -4,7 +4,6 @@ from lazor.analysis import join_lines, collate_lines
 from lazor.dxf import draw, unpack
 
 
-
 def main():
     drawing = ezdxf.readfile(
         "c:/Users/drake/Dropbox/lasercut/tudor/tudor-farm-mdf-test.dxf")
@@ -23,7 +22,7 @@ def main():
             layer += new_lines
         layers.append(layer)
 
-    deduped = draw(*layers)
+    deduped = draw(**dict(enumerate(layers)))
 
     deduped.saveas("c:/Users/drake/Dropbox/lasercut/tudor/tudor-farm-mdf-deduped.dxf")
     # add_tabs(drawing).saveas("c:/Users/drake/Dropbox/lasercut/tudor/tudor-mdf-1-tabbed.dxf")

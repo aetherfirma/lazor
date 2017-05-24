@@ -268,3 +268,6 @@ class LineSet:
     def merge(self, other):
         for line in other:
             self.add(line)
+
+    def __len__(self):
+        return len(self.lines)
