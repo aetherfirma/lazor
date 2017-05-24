@@ -1,8 +1,7 @@
 import os
 import tkinter as tk
 from collections import OrderedDict
-from tkinter import ttk
-from tkinter import filedialog
+from tkinter import ttk, filedialog, messagebox
 
 import ezdxf
 
@@ -57,6 +56,7 @@ class Application(ttk.Frame):
         filename = filedialog.askopenfilename(filetypes=[("dxf files", ".dxf"), ("All files", ".*")])
 
         if not filename:
+            self.update_statusbar("Cancelled file open")
             return
 
         self.filename.set(filename)
@@ -72,15 +72,18 @@ class Application(ttk.Frame):
 
     def save_file(self):
         if not self.layers:
+            messagebox.showerror("Cannot Save", "You cannot save an empty file")
             return
 
         if not self.filename:
+            messagebox.showerror("Cannot Save", "You cannot save an empty file")
             return
 
         initialdir, initialfile = os.path.split(self.filename.get())
         filename = filedialog.asksaveasfilename(filetypes=[("dxf files", ".dxf")], initialfile=initialfile, initialdir=initialdir)
 
         if not filename:
+            self.update_statusbar("Cancelled file save")
             return
 
         dxf = draw(**self.layers)
@@ -147,10 +150,12 @@ class Application(ttk.Frame):
 
     def autofix(self):
         if not self.layers:
+            messagebox.showerror("Cannot perform autofix", "You must load a file first")
             return
 
         layers = [self.layer_box.get(i) for i in self.layer_box.curselection()]
         if not layers:
+            messagebox.showerror("Cannot perform autofix", "You must select one or more layers to fix")
             return
 
         pre_fix = sum([len(self.layers[l]) for l in layers])
@@ -178,10 +183,12 @@ class Application(ttk.Frame):
 
     def explode(self):
         if not self.layers:
+            messagebox.showerror("Cannot perform explode", "You must load a file first")
             return
 
         layers = [self.layer_box.get(i) for i in self.layer_box.curselection()]
         if not layers:
+            messagebox.showerror("Cannot perform explode", "You must select one or more layers to explode")
             return
 
         new_layers = []
@@ -203,10 +210,12 @@ class Application(ttk.Frame):
 
     def tab(self):
         if not self.layers:
+            messagebox.showerror("Cannot add tabs", "You must load a file first")
             return
 
         layers = [self.layer_box.get(i) for i in self.layer_box.curselection()]
         if not layers:
+            messagebox.showerror("Cannot add tabs", "You must select one or more layers to add tabs to")
             return
 
         for layer_name in layers:
