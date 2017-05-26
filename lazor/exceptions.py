@@ -1,0 +1,2 @@
+class AbortAction(RuntimeError):
+    pass

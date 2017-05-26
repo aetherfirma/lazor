@@ -1,13 +1,15 @@
 import os
 import tkinter as tk
 from collections import OrderedDict
-from tkinter import ttk, filedialog, messagebox, simpledialog
+from tkinter import ttk, filedialog, messagebox
 
 import ezdxf
 
-from lazor.analysis import join_lines, collate_lines
+from lazor.actions import autofix, explode, add_tabs, combine_layers, \
+    rename_layer, delete_layers
 from lazor.datastructures import Vec2
 from lazor.dxf import unpack, draw
+from lazor.exceptions import AbortAction
 
 
 class Application(ttk.Frame):
@@ -77,23 +79,22 @@ class Application(ttk.Frame):
     def save_file(self):
         if not self.layers:
             messagebox.showerror("Cannot Save", "You cannot save an empty file")
-            return
+            raise AbortAction()
 
         if not self.filename:
             messagebox.showerror("Cannot Save", "You cannot save an empty file")
-            return
+            raise AbortAction()
 
         initialdir, initialfile = os.path.split(self.filename.get())
         filename = filedialog.asksaveasfilename(filetypes=[("dxf files", ".dxf")], initialfile=initialfile, initialdir=initialdir, defaultextension="dxf")
 
         if not filename:
             self.update_statusbar("Cancelled file save")
-            return
+            raise AbortAction()
 
         dxf = draw(**self.layers)
         dxf.saveas(filename)
 
-        self.update_layerbox()
         self.update_canvas()
         self.update_statusbar("Saved file as {}".format(filename))
 
@@ -154,157 +155,69 @@ class Application(ttk.Frame):
                 end = (end - dxf_midpoint) * ratio + canvas_midpoint
                 self.canvas.create_line(start.x, start.y * -1 + canvas_height, end.x, end.y * -1 + canvas_height, fill=colour)
 
+    def action(self, act):
+        layers = self.layers
+        selections = [self.layer_box.get(i) for i in self.layer_box.curselection()]
+
+        try:
+            self.layers = act(layers, selections, self.update_statusbar)
+        except AbortAction:
+            pass
+
+        self.update_layerbox()
+        self.update_canvas()
+
     def autofix(self):
-        if not self.layers:
-            messagebox.showerror("Cannot perform autofix", "You must load a file first")
-            return
+        layers = self.layers
+        selections = [self.layer_box.get(i) for i in self.layer_box.curselection()]
 
-        layers = [self.layer_box.get(i) for i in self.layer_box.curselection()]
-        if not layers:
-            messagebox.showerror("Cannot perform autofix", "You must select one or more layers to fix")
-            return
-
-        pre_fix = sum([len(self.layers[l]) for l in layers])
-        if len(layers) == 1:
-            self.update_statusbar("Fixing '{}'...".format(layers[0]))
-        else:
-            self.update_statusbar("Fixing {} layers...".format(len(layers)))
-
-        for layer in layers:
-            self.layers[layer] = join_lines(self.layers[layer])
-
-        post_fix = sum([len(self.layers[l]) for l in layers])
-
-        prefix = "Layer '{}' had".format(layers[0]) if len(layers) == 1 else "Selected layers had"
-
-        self.update_statusbar("{} {} lines, reduced to {} ({}% saving)".format(
-            prefix,
-            pre_fix,
-            post_fix,
-            int((1-(post_fix/pre_fix))*100)
-        ))
+        self.layers = autofix(layers, selections, self.update_statusbar)
 
         self.update_layerbox()
         self.update_canvas()
 
     def explode(self):
-        if not self.layers:
-            messagebox.showerror("Cannot perform explode", "You must load a file first")
-            return
+        layers = self.layers
+        selections = [self.layer_box.get(i) for i in self.layer_box.curselection()]
 
-        layers = [self.layer_box.get(i) for i in self.layer_box.curselection()]
-        if not layers:
-            messagebox.showerror("Cannot perform explode", "You must select one or more layers to explode")
-            return
-
-        new_layers = []
-
-        for layer_name in layers:
-            layer = self.layers[layer_name]
-            del self.layers[layer_name]
-
-            new_layers = collate_lines(layer)
-            if len(new_layers) == 1:
-                self.layers[layer_name] = new_layers[0]
-            else:
-                for n, new_layer in enumerate(new_layers):
-                    self.layers["{} {}".format(layer_name, n+1)] = new_layer
+        self.layers = explode(layers, selections, self.update_statusbar)
 
         self.update_layerbox()
         self.update_canvas()
-        self.update_statusbar("Created {} new layers".format(len(new_layers)))
 
     def tab(self):
-        if not self.layers:
-            messagebox.showerror("Cannot add tabs", "You must load a file first")
-            return
+        layers = self.layers
+        selections = [self.layer_box.get(i) for i in self.layer_box.curselection()]
 
-        layers = [self.layer_box.get(i) for i in self.layer_box.curselection()]
-        if not layers:
-            messagebox.showerror("Cannot add tabs", "You must select one or more layers to add tabs to")
-            return
+        self.layers = add_tabs(layers, selections, self.update_statusbar)
 
-        for layer_name in layers:
-            layer = self.layers[layer_name]
-
-            new_layer = []
-            for line in layer:
-                _, new_lines = line.add_tab(29)
-                new_layer += new_lines
-
-                self.layers[layer_name] = new_layer
-
-        if len(layers) == 1:
-            self.update_statusbar("Added tabs to '{}'".format(layers[0]))
-        else:
-            self.update_statusbar("Added tabs to {} layers".format(len(layers)))
-
+        self.update_layerbox()
         self.update_canvas()
 
     def combine(self):
-        if not self.layers:
-            messagebox.showerror("Cannot combine layers", "You must load a file first")
-            return
+        layers = self.layers
+        selections = [self.layer_box.get(i) for i in self.layer_box.curselection()]
 
-        layers = [self.layer_box.get(i) for i in self.layer_box.curselection()]
-        if len(layers) < 2:
-            messagebox.showerror("Cannot combine layers", "You must select two or more layers to combine")
-            return
-
-        new_layer_name = simpledialog.askstring("New layer name", "Please enter the new layer name", initialvalue=layers[0])
-
-        new_layer = []
-        for layer in (self.layers[l] for l in layers):
-            for line in layer:
-                new_layer.append(line)
-
-        for layer in layers:
-            del self.layers[layer]
-
-        self.layers[new_layer_name] = new_layer
+        self.layers = combine_layers(layers, selections, self.update_statusbar)
 
         self.update_layerbox()
         self.update_canvas()
-        self.update_statusbar("Merged {} layers into '{}'".format(len(layers), new_layer_name))
 
     def rename(self):
-        if not self.layers:
-            messagebox.showerror("Cannot rename layer", "You must load a file first")
-            return
+        layers = self.layers
+        selections = [self.layer_box.get(i) for i in self.layer_box.curselection()]
 
-        layers = [self.layer_box.get(i) for i in self.layer_box.curselection()]
-        if len(layers) != 1:
-            messagebox.showerror("Cannot rename layer", "You must select one layer to rename")
-            return
-
-        old_layer_name = layers[0]
-        new_layer_name = simpledialog.askstring("New layer name", "Please enter the new layer name")
-
-        layer = self.layers[old_layer_name]
-        del self.layers[old_layer_name]
-        self.layers[new_layer_name] = layer
+        self.layers = rename_layer(layers, selections, self.update_statusbar)
 
         self.update_layerbox()
         self.update_canvas()
-        self.update_statusbar("Renamed '{}' to '{}'".format(old_layer_name, new_layer_name))
 
     def delete(self):
-        if not self.layers:
-            messagebox.showerror("Cannot delete layers", "You must load a file first")
-            return
+        layers = self.layers
+        selections = [self.layer_box.get(i) for i in self.layer_box.curselection()]
+        update_statusbar = self.update_statusbar
 
-        layers = [self.layer_box.get(i) for i in self.layer_box.curselection()]
-        if not layers:
-            messagebox.showerror("Cannot delete layers", "You must select one or more layers to delete")
-            return
-
-        for layer_name in layers:
-            del self.layers[layer_name]
-
-        if len(layers) == 1:
-            self.update_statusbar("Deleted '{}'".format(layers[0]))
-        else:
-            self.update_statusbar("Deleted {} layers".format(len(layers)))
+        self.layers = delete_layers(layers, selections, update_statusbar)
 
         self.update_canvas()
         self.update_layerbox()
