@@ -121,29 +121,31 @@ class Application(ttk.Frame):
 
     def update_canvas(self):
         self.canvas.delete(tk.ALL)
-        width = self.canvas.winfo_width()
-        height = self.canvas.winfo_height()
+        canvas_width = self.canvas.winfo_width()
+        canvas_height = self.canvas.winfo_height()
 
-        midpoint = Vec2(width / 2, height / 2)
+        canvas_midpoint = Vec2(canvas_width / 2, canvas_height / 2)
 
         if not self.layers:
             self.canvas.create_text(
-                *midpoint,
+                *canvas_midpoint,
                 text="NO FILE LOADED",
                 fill="red"
             )
             return
 
-        min_point = Vec2(float('inf'), float('inf'))
-        max_point = Vec2(float('-inf'), float('-inf'))
+        dxf_minpoint = Vec2(float('inf'), float('inf'))
+        dxf_maxpoint = Vec2(float('-inf'), float('-inf'))
 
         for layer in self.layers.values():
             for start, end in layer:
-                min_point = Vec2(min(start.x, end.x, min_point.x), min(start.y, end.y, min_point.y))
-                max_point = Vec2(max(start.x, end.x, max_point.x), max(start.y, end.y, max_point.y))
+                dxf_minpoint = Vec2(min(start.x, end.x, dxf_minpoint.x), min(start.y, end.y, dxf_minpoint.y))
+                dxf_maxpoint = Vec2(max(start.x, end.x, dxf_maxpoint.x), max(start.y, end.y, dxf_maxpoint.y))
 
-        drawing_width, drawing_height = max_point - min_point
-        ratio = min((width - 10)/drawing_width, (height - 10)/drawing_height)
+        dxf_midpoint = dxf_minpoint.midpoint(dxf_maxpoint)
+
+        drawing_width, drawing_height = dxf_maxpoint - dxf_minpoint
+        ratio = min((canvas_width*.9)/drawing_width, (canvas_height*.9)/drawing_height)
 
         selected_layers = [self.layer_box.get(i) for i in self.layer_box.curselection()]
 
@@ -151,9 +153,9 @@ class Application(ttk.Frame):
             colour = "red" if layer_name in selected_layers else "black"
 
             for start, end in layer:
-                start = start * ratio + midpoint
-                end = end * ratio + midpoint
-                self.canvas.create_line(start.x, start.y * -1 + height, end.x, end.y * -1 + height, fill=colour)
+                start = (start - dxf_midpoint) * ratio + canvas_midpoint
+                end = (end - dxf_midpoint) * ratio + canvas_midpoint
+                self.canvas.create_line(start.x, start.y * -1 + canvas_height, end.x, end.y * -1 + canvas_height, fill=colour)
 
     def autofix(self):
         if not self.layers:
