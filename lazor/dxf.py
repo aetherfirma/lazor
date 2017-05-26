@@ -1,4 +1,5 @@
 import ezdxf
+from collections import defaultdict
 
 from lazor.datastructures import Vec2, Line
 
@@ -16,9 +17,10 @@ def draw(**layers):
 
 
 def unpack(modelspace):
-    lines = []
     min_point = Vec2(float('inf'), float('inf'))
     max_point = Vec2(float('-inf'), float('-inf'))
+
+    layers = defaultdict(list)
 
     for entity in modelspace:
         start = Vec2(*entity.dxf.start)
@@ -32,12 +34,13 @@ def unpack(modelspace):
         min_point = Vec2(min_x, min_y)
         max_point = Vec2(max_x, max_y)
 
-        lines.append(Line(start, end))
+        layers[entity.dxf.layer].append(Line(start, end))
 
     centre = min_point.midpoint(max_point)
 
-    for line in lines:
-        line.start = line.start - centre
-        line.end = line.end - centre
+    for layer in layers.values():
+        for line in layer:
+            line.start = line.start - centre
+            line.end = line.end - centre
 
-    return lines
+    return layers

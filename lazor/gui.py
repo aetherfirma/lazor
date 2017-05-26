@@ -71,7 +71,7 @@ class Application(ttk.Frame):
 
         drawing = ezdxf.readfile(filename)
         self.layers = OrderedDict()
-        self.layers["drawing"] = unpack(drawing.modelspace())
+        self.layers.update(unpack(drawing.modelspace()))
 
         self.update_layerbox()
         self.update_canvas()
