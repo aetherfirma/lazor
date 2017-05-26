@@ -45,7 +45,7 @@ class Application(ttk.Frame):
 
         ttk.Button(self.button_frame, text="Autofix", command=self.autofix).pack(anchor=tk.N)
         ttk.Button(self.button_frame, text="Add Tabs", command=self.tab).pack(anchor=tk.N)
-        ttk.Button(self.button_frame, text="Explode Components", command=self.explode).pack(anchor=tk.N)
+        ttk.Button(self.button_frame, text="Explode", command=self.explode).pack(anchor=tk.N)
         ttk.Button(self.button_frame, text="Combine", command=self.combine).pack(anchor=tk.N)
         ttk.Button(self.button_frame, text="Rename", command=self.rename).pack(anchor=tk.N)
         ttk.Button(self.button_frame, text="Delete", command=self.delete).pack(anchor=tk.N)
