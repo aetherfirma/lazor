@@ -23,12 +23,6 @@ class Application(ttk.Frame):
         self.rowconfigure(1, weight=1)
         self.rowconfigure(2, weight=0)
         self.rowconfigure(3, weight=0)
-        self.rowconfigure(4, weight=0)
-        self.rowconfigure(5, weight=0)
-        self.rowconfigure(6, weight=0)
-        self.rowconfigure(7, weight=0)
-        self.rowconfigure(8, weight=0)
-        self.rowconfigure(9, weight=0)
         self.columnconfigure(0, weight=0)
         self.columnconfigure(1, weight=1)
         self.columnconfigure(2, weight=0)
@@ -36,23 +30,26 @@ class Application(ttk.Frame):
         ttk.Button(self, text="Open File", command=self.open_file).grid(column=0, row=0)
 
         ttk.Label(self, textvariable=self.filename, relief="sunken", padding="5 5 5 5").grid(column=1, columnspan=2, row=0, sticky=tk.W+tk.E+tk.N+tk.S)
-        ttk.Label(self, textvariable=self.statusbar, relief="sunken", padding="5 5 5 5").grid(column=0, columnspan=3, row=9, sticky=tk.W+tk.E+tk.N+tk.S)
+        ttk.Label(self, textvariable=self.statusbar, relief="sunken", padding="5 5 5 5").grid(column=0, columnspan=3, row=3, sticky=tk.W+tk.E+tk.N+tk.S)
 
         self.canvas = tk.Canvas(self, relief="sunken", bg="white")
-        self.canvas.grid(column=0, columnspan=2, row=1, rowspan=8, sticky=tk.W+tk.E+tk.N+tk.S)
+        self.canvas.grid(column=0, columnspan=2, row=1, rowspan=2, sticky=tk.W+tk.E+tk.N+tk.S)
         self.canvas.bind("<Configure>", self.redraw_on_event)
 
         self.layer_box = tk.Listbox(self, selectmode=tk.EXTENDED)
         self.layer_box.grid(column=2, row=1, sticky=tk.W+tk.E+tk.N+tk.S)
         self.layer_box.bind("<<ListboxSelect>>", self.select_layer)
 
-        ttk.Button(self, text="Autofix", command=self.autofix).grid(column=2, row=2)
-        ttk.Button(self, text="Add Tabs", command=self.tab).grid(column=2, row=3)
-        ttk.Button(self, text="Explode Components", command=self.explode).grid(column=2, row=4)
-        ttk.Button(self, text="Combine", command=self.combine).grid(column=2, row=5)
-        ttk.Button(self, text="Rename", command=self.rename).grid(column=2, row=6)
-        ttk.Button(self, text="Delete", command=self.delete).grid(column=2, row=7)
-        ttk.Button(self, text="Save As", command=self.save_file).grid(column=2, row=8)
+        self.button_frame = ttk.Frame(self)
+        self.button_frame.grid(row=2, column=2)
+
+        ttk.Button(self.button_frame, text="Autofix", command=self.autofix).pack(anchor=tk.N)
+        ttk.Button(self.button_frame, text="Add Tabs", command=self.tab).pack(anchor=tk.N)
+        ttk.Button(self.button_frame, text="Explode Components", command=self.explode).pack(anchor=tk.N)
+        ttk.Button(self.button_frame, text="Combine", command=self.combine).pack(anchor=tk.N)
+        ttk.Button(self.button_frame, text="Rename", command=self.rename).pack(anchor=tk.N)
+        ttk.Button(self.button_frame, text="Delete", command=self.delete).pack(anchor=tk.N)
+        ttk.Button(self.button_frame, text="Save As", command=self.save_file).pack(anchor=tk.N)
         self.update_statusbar("Welcome to LAZOR")
 
     def update_statusbar(self, msg):
