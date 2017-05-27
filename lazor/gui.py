@@ -1,6 +1,7 @@
 import os
 import tkinter as tk
 from collections import OrderedDict
+from functools import partial
 from tkinter import ttk, filedialog, messagebox
 
 import ezdxf
@@ -45,18 +46,26 @@ class Application(ttk.Frame):
         self.button_frame = ttk.Frame(self)
         self.button_frame.grid(row=2, column=2)
 
-        ttk.Button(self.button_frame, text="Autofix", command=self.autofix).pack(anchor=tk.N)
-        ttk.Button(self.button_frame, text="Add Tabs", command=self.tab).pack(anchor=tk.N)
-        ttk.Button(self.button_frame, text="Explode", command=self.explode).pack(anchor=tk.N)
-        ttk.Button(self.button_frame, text="Combine", command=self.combine).pack(anchor=tk.N)
-        ttk.Button(self.button_frame, text="Rename", command=self.rename).pack(anchor=tk.N)
-        ttk.Button(self.button_frame, text="Delete", command=self.delete).pack(anchor=tk.N)
+        for name, callback in [
+            ("Autofix", autofix),
+            ("Add Tabs", add_tabs),
+            ("Explode", explode),
+            ("Combine", combine_layers),
+            ("Rename", rename_layer),
+            ("Delete", delete_layers),
+        ]:
+            self.add_button(name, callback)
+
         ttk.Button(self.button_frame, text="Save As", command=self.save_file).pack(anchor=tk.N)
         self.update_statusbar("Welcome to LAZOR")
 
     def update_statusbar(self, msg):
         self.statusbar.set(msg)
         self.master.update()
+
+    def add_button(self, name, callback):
+        ttk.Button(self.button_frame, text=name, command=partial(self.action, callback)).pack(anchor=tk.N)
+
 
     def open_file(self):
         filename = filedialog.askopenfilename(filetypes=[("dxf files", ".dxf"), ("All files", ".*")])
@@ -166,61 +175,6 @@ class Application(ttk.Frame):
 
         self.update_layerbox()
         self.update_canvas()
-
-    def autofix(self):
-        layers = self.layers
-        selections = [self.layer_box.get(i) for i in self.layer_box.curselection()]
-
-        self.layers = autofix(layers, selections, self.update_statusbar)
-
-        self.update_layerbox()
-        self.update_canvas()
-
-    def explode(self):
-        layers = self.layers
-        selections = [self.layer_box.get(i) for i in self.layer_box.curselection()]
-
-        self.layers = explode(layers, selections, self.update_statusbar)
-
-        self.update_layerbox()
-        self.update_canvas()
-
-    def tab(self):
-        layers = self.layers
-        selections = [self.layer_box.get(i) for i in self.layer_box.curselection()]
-
-        self.layers = add_tabs(layers, selections, self.update_statusbar)
-
-        self.update_layerbox()
-        self.update_canvas()
-
-    def combine(self):
-        layers = self.layers
-        selections = [self.layer_box.get(i) for i in self.layer_box.curselection()]
-
-        self.layers = combine_layers(layers, selections, self.update_statusbar)
-
-        self.update_layerbox()
-        self.update_canvas()
-
-    def rename(self):
-        layers = self.layers
-        selections = [self.layer_box.get(i) for i in self.layer_box.curselection()]
-
-        self.layers = rename_layer(layers, selections, self.update_statusbar)
-
-        self.update_layerbox()
-        self.update_canvas()
-
-    def delete(self):
-        layers = self.layers
-        selections = [self.layer_box.get(i) for i in self.layer_box.curselection()]
-        update_statusbar = self.update_statusbar
-
-        self.layers = delete_layers(layers, selections, update_statusbar)
-
-        self.update_canvas()
-        self.update_layerbox()
 
 
 def main():
