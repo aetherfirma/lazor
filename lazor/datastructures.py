@@ -147,7 +147,7 @@ class Line:
     def __eq__(self, other):
         ts, te = self
         os, oe = other
-        return (ts == os and te == os) or (ts == oe and te == os)
+        return (ts == os and te == oe) or (ts == oe and te == os)
 
     def __hash__(self):
         return hash(frozenset(self))

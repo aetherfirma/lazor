@@ -156,12 +156,15 @@ class Application(ttk.Frame):
 
         selected_layers = [self.layer_box.get(i) for i in self.layer_box.curselection()]
 
-        for layer_name, layer in self.layers.items():
-            colour = "red" if layer_name in selected_layers else "black"
+        selected_colours = ("red", "green")
 
-            for start, end in layer:
+        for layer_name, layer in self.layers.items():
+            for n, (start, end) in enumerate(layer):
                 start = (start - dxf_midpoint) * ratio + canvas_midpoint
                 end = (end - dxf_midpoint) * ratio + canvas_midpoint
+
+                colour = selected_colours[n % len(selected_colours)] if layer_name in selected_layers else "black"
+
                 self.canvas.create_line(start.x, start.y * -1 + canvas_height, end.x, end.y * -1 + canvas_height, fill=colour)
 
     def action(self, act):
