@@ -66,7 +66,6 @@ class Application(ttk.Frame):
     def add_button(self, name, callback):
         ttk.Button(self.button_frame, text=name, command=partial(self.action, callback)).pack(anchor=tk.N)
 
-
     def open_file(self):
         filename = filedialog.askopenfilename(filetypes=[("dxf files", ".dxf"), ("All files", ".*")])
 

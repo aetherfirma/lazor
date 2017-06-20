@@ -1,3 +1,4 @@
+import random
 from tkinter import messagebox, simpledialog
 
 from lazor.analysis import join_lines, collate_lines
@@ -74,6 +75,8 @@ def add_tabs(layers, selections, update_statusbar):
 
     for layer_name in selections:
         layer = layers[layer_name]
+
+        # TODO: Use collate_lines to explode, convert to polygons
 
         new_layer = []
         for line in layer:
