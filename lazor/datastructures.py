@@ -21,6 +21,8 @@ class Vec2:
         return Vec2(self.x - other.x, self.y - other.y)
 
     def normalized(self):
+        if self.length() == 0:
+            return Vec2(0, 0)
         return Vec2(self.x / self.length(), self.y / self.length())
 
     def __mul__(self, other):

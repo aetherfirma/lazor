@@ -73,6 +73,9 @@ def add_tabs(layers, selections, update_statusbar):
         messagebox.showerror("Cannot add tabs", "You must select one or more layers to add tabs to")
         raise AbortAction()
 
+    tab_distance = simpledialog.askfloat("Tab Distance", "Please enter the distance between tabs in mm", initialvalue=15.0)
+    tab_width = simpledialog.askfloat("Tab Width", "Please enter the tab width in mm", initialvalue=0.5)
+
     for layer_name in selections:
         layer = layers[layer_name]
 
@@ -80,7 +83,7 @@ def add_tabs(layers, selections, update_statusbar):
 
         new_layer = []
         for line in layer:
-            _, new_lines = line.add_tab(29)
+            _, new_lines = line.add_tab(tab_distance, tab_width)
             new_layer += new_lines
 
             layers[layer_name] = new_layer
