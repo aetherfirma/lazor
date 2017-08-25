@@ -7,7 +7,7 @@ from tkinter import ttk, filedialog, messagebox
 import ezdxf
 
 from lazor.actions import autofix, explode, add_tabs, combine_layers, \
-    rename_layer, delete_layers, optimise
+    rename_layer, delete_layers, optimise, laser_estimation
 from lazor.analysis import ideal_laser_distance
 from lazor.datastructures import Vec2
 from lazor.dxf import unpack, draw
@@ -50,6 +50,7 @@ class Application(ttk.Frame):
         for name, callback in [
             ("Autofix", autofix),
             ("Optimise", optimise),
+            ("Estimate", laser_estimation),
             ("Add Tabs", add_tabs),
             ("Explode", explode),
             ("Combine", combine_layers),

@@ -101,6 +101,26 @@ def ideal_laser_distance(layer):
     return travel
 
 
+def estimated_laser_time(layer, idle_speed, active_speed):
+    """
+    Calculates the ideal transit distance for a given set of lines. It is 
+    assumed that the laser head begins on at the start of the first line and 
+    that execution ends as soon as the laser head reaches the end of the last 
+    line.
+    """
+
+    travel = 0
+    current_cord = layer[0].start
+
+    for line in layer:
+        travel += current_cord.distance(line.start) / idle_speed
+        travel += line.length() / active_speed
+
+        current_cord = line.end
+
+    return travel
+
+
 def optimise_line_set_ordering(layer):
     line_sets = layer
     ordered_lines = []

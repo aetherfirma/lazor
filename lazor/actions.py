@@ -2,7 +2,7 @@ import random
 from tkinter import messagebox, simpledialog
 
 from lazor.analysis import join_lines, collate_lines, \
-    optimise_line_set_ordering, ideal_laser_distance
+    optimise_line_set_ordering, ideal_laser_distance, estimated_laser_time
 from lazor.exceptions import AbortAction
 
 
@@ -93,6 +93,35 @@ def explode(layers, selections, update_statusbar):
                 layers["{} {}".format(layer_name, n + 1)] = new_layer
 
     update_statusbar("Created {} new layers".format(len(new_layers)))
+
+    return layers
+
+
+def laser_estimation(layers, selections, update_statusbar):
+    if not layers:
+        messagebox.showerror("Cannot estimate laser time", "You must load a file first")
+        raise AbortAction()
+
+    if not selections:
+        messagebox.showerror("Cannot estimate laser time", "You must select one or more layers to estimate")
+        raise AbortAction()
+
+    idle_speed = simpledialog.askfloat("Idle Speed", "Please enter the tool idle speed", initialvalue=100)
+    active_speed = simpledialog.askfloat("Active Speed", "Please enter the tool active speed", initialvalue=0.5)
+
+    time = 0
+
+    for layer_name in selections:
+        layer = layers[layer_name]
+
+        time += estimated_laser_time(layer, idle_speed, active_speed)
+
+    prefix = "This layer" if len(selections) == "1" else "These layers"
+
+    update_statusbar("{} should take ~{} seconds".format(
+        prefix,
+        round(time, 0)
+    ))
 
     return layers
 
