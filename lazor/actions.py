@@ -1,7 +1,8 @@
 import random
 from tkinter import messagebox, simpledialog
 
-from lazor.analysis import join_lines, collate_lines
+from lazor.analysis import join_lines, collate_lines, \
+    optimise_line_set_ordering, ideal_laser_distance
 from lazor.exceptions import AbortAction
 
 
@@ -31,6 +32,38 @@ def autofix(layers, selections, update_statusbar):
         prefix,
         pre_fix,
         post_fix,
+        int((1-(post_fix/pre_fix))*100)
+    ))
+
+    return layers
+
+
+def optimise(layers, selections, update_statusbar):
+    if not layers:
+        messagebox.showerror("Cannot perform optimisation", "You must load a file first")
+        raise AbortAction()
+
+    if not selections:
+        messagebox.showerror("Cannot perform optimisation", "You must select one or more layers to optimise")
+        raise AbortAction()
+
+    pre_fix = sum([ideal_laser_distance(layers[l]) for l in selections])
+    if len(selections) == 1:
+        update_statusbar("Optimising '{}'...".format(selections[0]))
+    else:
+        update_statusbar("Optimising {} layers...".format(len(selections)))
+
+    for layer in selections:
+        layers[layer] = optimise_line_set_ordering(layers[layer])
+
+    post_fix = sum([ideal_laser_distance(layers[l]) for l in selections])
+
+    prefix = "Layer '{}' travelled".format(selections[0]) if len(selections) == 1 else "Selected layers travelled"
+
+    update_statusbar("{} {}mm, reduced to {}mm ({}% saving)".format(
+        prefix,
+        round(pre_fix, 1),
+        round(post_fix, 1),
         int((1-(post_fix/pre_fix))*100)
     ))
 

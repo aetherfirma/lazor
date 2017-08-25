@@ -7,7 +7,8 @@ from tkinter import ttk, filedialog, messagebox
 import ezdxf
 
 from lazor.actions import autofix, explode, add_tabs, combine_layers, \
-    rename_layer, delete_layers
+    rename_layer, delete_layers, optimise
+from lazor.analysis import ideal_laser_distance
 from lazor.datastructures import Vec2
 from lazor.dxf import unpack, draw
 from lazor.exceptions import AbortAction
@@ -48,6 +49,7 @@ class Application(ttk.Frame):
 
         for name, callback in [
             ("Autofix", autofix),
+            ("Optimise", optimise),
             ("Add Tabs", add_tabs),
             ("Explode", explode),
             ("Combine", combine_layers),
@@ -119,9 +121,20 @@ class Application(ttk.Frame):
         layers = [self.layer_box.get(i) for i in self.layer_box.curselection()]
         if len(layers) == 1:
             layer = layers[0]
-            self.update_statusbar("Layer '{}' contains {} lines".format(layer, len(self.layers[layer])))
+            self.update_statusbar(
+                "Layer '{}' contains {} lines, travelling {}mm".format(
+                    layer,
+                    len(self.layers[layer]),
+                    round(ideal_laser_distance(self.layers[layer]), 1)
+                )
+            )
         elif len(layers) > 1:
-            self.update_statusbar("Selected layers contain {} lines".format(sum([len(self.layers[layer]) for layer in layers])))
+            self.update_statusbar(
+                "Selected layers contain {} lines, travelling a total of {}mm".format(
+                    sum([len(self.layers[layer]) for layer in layers]),
+                    round(sum(ideal_laser_distance(self.layers[layer]) for layer in layers), 1)
+                )
+            )
 
         self.update_canvas()
 
