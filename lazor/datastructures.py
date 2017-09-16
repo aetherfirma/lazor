@@ -1,7 +1,7 @@
 import math
 from enum import Enum
 
-from typing import Set, Tuple
+from typing import Set, Tuple, List
 
 
 class Vec2:
@@ -238,12 +238,12 @@ class Polygon:
 
 
 class LineSet:
-    lines: Set[Line]
+    lines: List[Line]
     verts: Set[Vec2]
     loop: bool
 
     def __init__(self, start):
-        self.lines = {start}
+        self.lines = [start]
         self.verts = set(start)
         self.loop = False
 
@@ -251,7 +251,7 @@ class LineSet:
         if line in self.lines:
             raise ValueError("Line already in Lineset")
 
-        self.lines.add(line)
+        self.lines.append(line)
 
         loop = line.start in self.verts and line.end in self.verts
         self.verts.add(line.start)
@@ -266,6 +266,9 @@ class LineSet:
 
     def __iter__(self):
         return iter(self.lines)
+
+    def __getitem__(self, n):
+        return self.lines[n]
 
     def merge(self, other):
         for line in other:

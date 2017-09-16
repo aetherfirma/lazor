@@ -5,6 +5,9 @@ from functools import partial
 from tkinter import ttk, filedialog, messagebox
 
 import ezdxf
+import math
+
+from colour import Color
 
 from lazor.actions import autofix, explode, add_tabs, combine_layers, \
     rename_layer, delete_layers, optimise, laser_estimation
@@ -12,6 +15,8 @@ from lazor.analysis import ideal_laser_distance
 from lazor.datastructures import Vec2
 from lazor.dxf import unpack, draw
 from lazor.exceptions import AbortAction
+
+BG_COLOUR = "#1c1c1c"
 
 
 class Application(ttk.Frame):
@@ -40,7 +45,7 @@ class Application(ttk.Frame):
         self.canvas.grid(column=0, columnspan=2, row=1, rowspan=2, sticky=tk.W+tk.E+tk.N+tk.S)
         self.canvas.bind("<Configure>", self.redraw_on_event)
 
-        self.layer_box = tk.Listbox(self, selectmode=tk.EXTENDED)
+        self.layer_box = tk.Listbox(self, selectmode=tk.EXTENDED, bg=BG_COLOUR)
         self.layer_box.grid(column=2, row=1, sticky=tk.W+tk.E+tk.N+tk.S)
         self.layer_box.bind("<<ListboxSelect>>", self.select_layer)
 
@@ -112,8 +117,13 @@ class Application(ttk.Frame):
     def update_layerbox(self):
         self.layer_box.delete(0, tk.END)
 
+        layer_colours = self.layer_colours()
+
         for layer in self.layers:
             self.layer_box.insert(tk.END, layer)
+
+        for (n, _), colour in zip(enumerate(self.layers), layer_colours):
+            self.layer_box.itemconfigure(n, fg=colour, selectbackground=colour, selectforeground=BG_COLOUR)
 
     def redraw_on_event(self, event):
         self.update_canvas()
@@ -139,12 +149,17 @@ class Application(ttk.Frame):
 
         self.update_canvas()
 
+    def layer_colours(self):
+        return [Color(hsl=(255/len(self.layers)*n, 1, 0.75)).get_hex_l() for n, _ in enumerate(self.layers)]
+
     def update_canvas(self):
         self.canvas.delete(tk.ALL)
         canvas_width = self.canvas.winfo_width()
         canvas_height = self.canvas.winfo_height()
 
         canvas_midpoint = Vec2(canvas_width / 2, canvas_height / 2)
+
+        self.canvas.create_rectangle(0, 0, canvas_width, canvas_height, outline=None, fill=BG_COLOUR)
 
         if not self.layers:
             self.canvas.create_text(
@@ -167,18 +182,22 @@ class Application(ttk.Frame):
         drawing_width, drawing_height = dxf_maxpoint - dxf_minpoint
         ratio = min((canvas_width*.9)/drawing_width, (canvas_height*.9)/drawing_height)
 
+        for n in range(1, int(math.ceil(canvas_width / (ratio * 10)))):
+            self.canvas.create_line(n * ratio * 10, 0, n * ratio * 10, canvas_height, fill="#444444", dash=(2, 2))
+
+        for n in range(1, int(math.ceil(canvas_height / (ratio * 10)))):
+            self.canvas.create_line(0, n * ratio * 10, canvas_width, n * ratio * 10, fill="#444444", dash=(2, 2))
+
         selected_layers = [self.layer_box.get(i) for i in self.layer_box.curselection()]
 
-        selected_colours = ("red", "green")
+        layer_colours = self.layer_colours()
 
-        for layer_name, layer in self.layers.items():
+        for colour, (layer_name, layer) in zip(layer_colours, self.layers.items()):
             for n, (start, end) in enumerate(layer):
                 start = (start - dxf_midpoint) * ratio + canvas_midpoint
                 end = (end - dxf_midpoint) * ratio + canvas_midpoint
 
-                colour = selected_colours[n % len(selected_colours)] if layer_name in selected_layers else "black"
-
-                self.canvas.create_line(start.x, start.y * -1 + canvas_height, end.x, end.y * -1 + canvas_height, fill=colour)
+                self.canvas.create_line(start.x, start.y * -1 + canvas_height, end.x, end.y * -1 + canvas_height, fill=colour, width=2 if layer_name in selected_layers else 1)
 
     def action(self, act):
         layers = self.layers

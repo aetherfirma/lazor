@@ -2,3 +2,4 @@ ezdxf
 pytest
 hypothesis
 git+git://github.com/pyinstaller/pyinstaller.git
+colour
