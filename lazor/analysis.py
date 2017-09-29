@@ -181,7 +181,7 @@ def estimated_engrave_time(lines, active_speed, idle_speed, scanline, update_can
                         max(start.y, end.y, line_max.y))
         
     scanlines = int(math.ceil((line_max.y - line_min.y) / scanline)) + 1
-    scan_y = line_max.y + scanline / 2
+    scan_y = line_min.y - scanline / 2
     
     canvas_height = canvas.winfo_height()
 
@@ -201,7 +201,7 @@ def estimated_engrave_time(lines, active_speed, idle_speed, scanline, update_can
         if not intersections:
             time += scanline / idle_speed
             idle_time += scanline / idle_speed
-            scan_y -= scanline
+            scan_y += scanline
             continue
 
         if not first:
@@ -225,7 +225,7 @@ def estimated_engrave_time(lines, active_speed, idle_speed, scanline, update_can
         canvas.update()
 
         time += scanline / idle_speed
-        scan_y -= scanline
+        scan_y += scanline
 
         left = not left
 
