@@ -159,13 +159,13 @@ class Application(ttk.Frame):
         canvas_width = self.canvas.winfo_width()
         canvas_height = self.canvas.winfo_height()
 
-        canvas_midpoint = Vec2(canvas_width / 2, canvas_height / 2)
+        self.canvas.midpoint = Vec2(canvas_width / 2, canvas_height / 2)
 
         self.canvas.create_rectangle(0, 0, canvas_width, canvas_height, outline=None, fill=BG_COLOUR)
 
         if not self.layers:
             self.canvas.create_text(
-                *canvas_midpoint,
+                *self.canvas.midpoint,
                 text="NO FILE LOADED",
                 fill="red"
             )
@@ -179,16 +179,16 @@ class Application(ttk.Frame):
                 dxf_minpoint = Vec2(min(start.x, end.x, dxf_minpoint.x), min(start.y, end.y, dxf_minpoint.y))
                 dxf_maxpoint = Vec2(max(start.x, end.x, dxf_maxpoint.x), max(start.y, end.y, dxf_maxpoint.y))
 
-        dxf_midpoint = dxf_minpoint.midpoint(dxf_maxpoint)
+        self.canvas.dxf_midpoint = dxf_minpoint.midpoint(dxf_maxpoint)
 
         drawing_width, drawing_height = dxf_maxpoint - dxf_minpoint
-        ratio = min((canvas_width*.9)/drawing_width, (canvas_height*.9)/drawing_height)
+        self.canvas.drawing_ratio = min((canvas_width*.9)/drawing_width, (canvas_height*.9)/drawing_height)
 
-        for n in range(1, int(math.ceil(canvas_width / (ratio * 10)))):
-            self.canvas.create_line(n * ratio * 10, 0, n * ratio * 10, canvas_height, fill="#444444", dash=(2, 2))
+        for n in range(1, int(math.ceil(canvas_width / (self.canvas.drawing_ratio * 10)))):
+            self.canvas.create_line(n * self.canvas.drawing_ratio * 10, 0, n * self.canvas.drawing_ratio * 10, canvas_height, fill="#444444", dash=(2, 2))
 
-        for n in range(1, int(math.ceil(canvas_height / (ratio * 10)))):
-            self.canvas.create_line(0, n * ratio * 10, canvas_width, n * ratio * 10, fill="#444444", dash=(2, 2))
+        for n in range(1, int(math.ceil(canvas_height / (self.canvas.drawing_ratio * 10)))):
+            self.canvas.create_line(0, n * self.canvas.drawing_ratio * 10, canvas_width, n * self.canvas.drawing_ratio * 10, fill="#444444", dash=(2, 2))
 
         selected_layers = [self.layer_box.get(i) for i in self.layer_box.curselection()]
 
@@ -196,8 +196,8 @@ class Application(ttk.Frame):
 
         for colour, (layer_name, layer) in zip(layer_colours, self.layers.items()):
             for n, (start, end) in enumerate(layer):
-                start = (start - dxf_midpoint) * ratio + canvas_midpoint
-                end = (end - dxf_midpoint) * ratio + canvas_midpoint
+                start = (start - self.canvas.dxf_midpoint) * self.canvas.drawing_ratio + self.canvas.midpoint
+                end = (end - self.canvas.dxf_midpoint) * self.canvas.drawing_ratio + self.canvas.midpoint
 
                 self.canvas.create_line(start.x, start.y * -1 + canvas_height, end.x, end.y * -1 + canvas_height, fill=colour, width=2 if layer_name in selected_layers else 1)
 
@@ -206,7 +206,7 @@ class Application(ttk.Frame):
         selections = [self.layer_box.get(i) for i in self.layer_box.curselection()]
 
         try:
-            self.layers = act(layers, selections, self.update_statusbar)
+            self.layers = act(layers, selections, self.update_statusbar, self.update_canvas, self.canvas)
         except AbortAction:
             pass
 

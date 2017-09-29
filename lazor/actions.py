@@ -6,7 +6,7 @@ from lazor.analysis import join_lines, collate_lines, \
 from lazor.exceptions import AbortAction
 
 
-def autofix(layers, selections, update_statusbar):
+def autofix(layers, selections, update_statusbar, update_canvas, canvas):
     if not layers:
         messagebox.showerror("Cannot perform autofix", "You must load a file first")
         raise AbortAction()
@@ -38,7 +38,7 @@ def autofix(layers, selections, update_statusbar):
     return layers
 
 
-def optimise(layers, selections, update_statusbar):
+def optimise(layers, selections, update_statusbar, update_canvas, canvas):
     if not layers:
         messagebox.showerror("Cannot perform optimisation", "You must load a file first")
         raise AbortAction()
@@ -70,7 +70,7 @@ def optimise(layers, selections, update_statusbar):
     return layers
 
 
-def explode(layers, selections, update_statusbar):
+def explode(layers, selections, update_statusbar, update_canvas, canvas):
     if not layers:
         messagebox.showerror("Cannot perform explode", "You must load a file first")
         raise AbortAction()
@@ -97,7 +97,7 @@ def explode(layers, selections, update_statusbar):
     return layers
 
 
-def laser_estimation(layers, selections, update_statusbar):
+def laser_estimation(layers, selections, update_statusbar, update_canvas, canvas):
     if not layers:
         messagebox.showerror("Cannot estimate laser time", "You must load a file first")
         raise AbortAction()
@@ -126,7 +126,7 @@ def laser_estimation(layers, selections, update_statusbar):
     return layers
 
 
-def laser_engraving_estimation(layers, selections, update_statusbar):
+def laser_engraving_estimation(layers, selections, update_statusbar, update_canvas, canvas):
     if not layers:
         messagebox.showerror("Cannot estimate laser time", "You must load a file first")
         raise AbortAction()
@@ -143,7 +143,7 @@ def laser_engraving_estimation(layers, selections, update_statusbar):
 
     lines = sum((list(layers[layer_name]) for layer_name in selections), [])
 
-    idle_time, time = estimated_engrave_time(lines, active_speed, idle_speed, scanline)
+    idle_time, time = estimated_engrave_time(lines, active_speed, idle_speed, scanline, update_canvas, canvas)
 
     update_statusbar("Engraving will take ~{} seconds, spending ~{} seconds idle".format(
         int(round(time, 0)),
@@ -153,7 +153,7 @@ def laser_engraving_estimation(layers, selections, update_statusbar):
     return layers
 
 
-def add_tabs(layers, selections, update_statusbar):
+def add_tabs(layers, selections, update_statusbar, update_canvas, canvas):
     if not layers:
         messagebox.showerror("Cannot add tabs", "You must load a file first")
         raise AbortAction()
@@ -185,7 +185,7 @@ def add_tabs(layers, selections, update_statusbar):
     return layers
 
 
-def combine_layers(layers, selections, update_statusbar):
+def combine_layers(layers, selections, update_statusbar, update_canvas, canvas):
     if not layers:
         messagebox.showerror("Cannot combine layers",
                              "You must load a file first")
@@ -210,7 +210,7 @@ def combine_layers(layers, selections, update_statusbar):
     return layers
 
 
-def rename_layer(layers, selections, update_statusbar):
+def rename_layer(layers, selections, update_statusbar, update_canvas, canvas):
     if not layers:
         messagebox.showerror("Cannot rename layer",
                              "You must load a file first")
@@ -231,7 +231,7 @@ def rename_layer(layers, selections, update_statusbar):
     return layers
 
 
-def delete_layers(layers, selections, update_statusbar):
+def delete_layers(layers, selections, update_statusbar, update_canvas, canvas):
     if not layers:
         messagebox.showerror("Cannot delete layers",
                              "You must load a file first")

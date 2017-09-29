@@ -1,4 +1,5 @@
 import math
+import random
 from functools import reduce
 
 from lazor.datastructures import Line, LineSet, Vec2
@@ -167,31 +168,65 @@ def all_intersections(candidate_y, lines):
     return [line for line in lines if min(line.start.y, line.end.y) < candidate_y < max(line.start.y, line.end.y)]
 
 
-def estimated_engrave_time(lines, active_speed, idle_speed, scanline):
+def estimated_engrave_time(lines, active_speed, idle_speed, scanline, update_canvas, canvas):
     time = 0
     idle_time = 0
     line_min = Vec2(float('inf'), float('inf'))
     line_max = Vec2(float('-inf'), float('-inf'))
+    
     for start, end in lines:
         line_min = Vec2(min(start.x, end.x, line_min.x),
                         min(start.y, end.y, line_min.y))
         line_max = Vec2(max(start.x, end.x, line_max.x),
                         max(start.y, end.y, line_max.y))
+        
     scanlines = int(math.ceil((line_max.y - line_min.y) / scanline)) + 1
     scan_y = line_max.y + scanline / 2
+    
+    canvas_height = canvas.winfo_height()
+
+    scanning_line = None
+
+    left = True
+    first = True
+    last_min, last_max = None, None
+    
     for _ in range(scanlines):
+        print("left" if left else "right")
         intersections = all_intersections(scan_y, lines)
+
+        if scanning_line:
+            canvas.delete(scanning_line)
 
         if not intersections:
             time += scanline / idle_speed
             idle_time += scanline / idle_speed
-            scan_y -= scan_y
+            scan_y -= scanline
             continue
 
+        if not first:
+            last_min = min_x
+            last_max = max_x
+            first = False
+
         min_x = min(min(line.start.x, line.end.x) for line in intersections)
-        max_x = max(min(line.start.x, line.end.x) for line in intersections)
-        time += (max_x - min_x) / active_speed
+        max_x = max(max(line.start.x, line.end.x) for line in intersections)
+        time += (max_x - min_x + 100) / active_speed
+        if not first:
+            if left:
+                time += abs(min_x - last_min) / active_speed
+            else:
+                time += abs(max_x - last_max) / active_speed
+
+        start = (Vec2(min_x, scan_y) - canvas.dxf_midpoint) * canvas.drawing_ratio + canvas.midpoint
+        end = (Vec2(max_x, scan_y) - canvas.dxf_midpoint) * canvas.drawing_ratio + canvas.midpoint
+
+        scanning_line = canvas.create_line(start.x, start.y * -1 + canvas_height, end.x, end.y * -1 + canvas_height, fill="red", width=3)
+        canvas.update()
+
         time += scanline / idle_speed
-        scan_y -= scan_y
+        scan_y -= scanline
+
+        left = not left
 
     return idle_time, time
