@@ -1,8 +1,8 @@
-import random
 from tkinter import messagebox, simpledialog
 
 from lazor.analysis import join_lines, collate_lines, \
-    optimise_line_set_ordering, ideal_laser_distance, estimated_laser_time
+    optimise_line_set_ordering, ideal_laser_distance, estimated_laser_time, \
+    estimated_engrave_time
 from lazor.exceptions import AbortAction
 
 
@@ -107,7 +107,7 @@ def laser_estimation(layers, selections, update_statusbar):
         raise AbortAction()
 
     idle_speed = simpledialog.askfloat("Idle Speed", "Please enter the tool idle speed", initialvalue=100)
-    active_speed = simpledialog.askfloat("Active Speed", "Please enter the tool active speed", initialvalue=0.5)
+    active_speed = simpledialog.askfloat("Active Speed", "Please enter the tool active speed", initialvalue=35)
 
     time = 0
 
@@ -120,7 +120,34 @@ def laser_estimation(layers, selections, update_statusbar):
 
     update_statusbar("{} should take ~{} seconds".format(
         prefix,
-        round(time, 0)
+        int(round(time, 0))
+    ))
+
+    return layers
+
+
+def laser_engraving_estimation(layers, selections, update_statusbar):
+    if not layers:
+        messagebox.showerror("Cannot estimate laser time", "You must load a file first")
+        raise AbortAction()
+
+    if not selections:
+        messagebox.showerror("Cannot estimate laser time", "You must select one or more layers to estimate")
+        raise AbortAction()
+
+    idle_speed = simpledialog.askfloat("Idle Speed", "Please enter the tool idle speed", initialvalue=10)
+    active_speed = simpledialog.askfloat("Active Speed", "Please enter the tool active speed", initialvalue=800)
+    scanline = simpledialog.askfloat("Scanline Distance", "Please enter the scanline distance", initialvalue=0.05)
+
+    update_statusbar("Estimating engraving time")
+
+    lines = sum((list(layers[layer_name]) for layer_name in selections), [])
+
+    idle_time, time = estimated_engrave_time(lines, active_speed, idle_speed, scanline)
+
+    update_statusbar("Engraving will take ~{} seconds, spending ~{} seconds idle".format(
+        int(round(time, 0)),
+        int(round(idle_time, 0))
     ))
 
     return layers

@@ -10,7 +10,8 @@ import math
 from colour import Color
 
 from lazor.actions import autofix, explode, add_tabs, combine_layers, \
-    rename_layer, delete_layers, optimise, laser_estimation
+    rename_layer, delete_layers, optimise, laser_estimation, \
+    laser_engraving_estimation
 from lazor.analysis import ideal_laser_distance
 from lazor.datastructures import Vec2
 from lazor.dxf import unpack, draw
@@ -56,6 +57,7 @@ class Application(ttk.Frame):
             ("Autofix", autofix),
             ("Optimise", optimise),
             ("Estimate", laser_estimation),
+            ("Estimate Engraving", laser_engraving_estimation),
             ("Add Tabs", add_tabs),
             ("Explode", explode),
             ("Combine", combine_layers),

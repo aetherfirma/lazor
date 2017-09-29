@@ -161,3 +161,37 @@ def optimise_line_set_ordering(layer):
             last_point = candidate_line.start
 
     return ordered_lines
+
+
+def all_intersections(candidate_y, lines):
+    return [line for line in lines if min(line.start.y, line.end.y) < candidate_y < max(line.start.y, line.end.y)]
+
+
+def estimated_engrave_time(lines, active_speed, idle_speed, scanline):
+    time = 0
+    idle_time = 0
+    line_min = Vec2(float('inf'), float('inf'))
+    line_max = Vec2(float('-inf'), float('-inf'))
+    for start, end in lines:
+        line_min = Vec2(min(start.x, end.x, line_min.x),
+                        min(start.y, end.y, line_min.y))
+        line_max = Vec2(max(start.x, end.x, line_max.x),
+                        max(start.y, end.y, line_max.y))
+    scanlines = int(math.ceil((line_max.y - line_min.y) / scanline)) + 1
+    scan_y = line_max.y + scanline / 2
+    for _ in range(scanlines):
+        intersections = all_intersections(scan_y, lines)
+
+        if not intersections:
+            time += scanline / idle_speed
+            idle_time += scanline / idle_speed
+            scan_y -= scan_y
+            continue
+
+        min_x = min(min(line.start.x, line.end.x) for line in intersections)
+        max_x = max(min(line.start.x, line.end.x) for line in intersections)
+        time += (max_x - min_x) / active_speed
+        time += scanline / idle_speed
+        scan_y -= scan_y
+
+    return idle_time, time
