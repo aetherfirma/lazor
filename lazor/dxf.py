@@ -4,25 +4,34 @@ from collections import defaultdict
 from lazor.datastructures import Vec2, Line
 
 
-def draw(**layers):
+def draw(layers, colours):
     dxf = ezdxf.new("R2007")
     modelspace = dxf.modelspace()
 
     for n, (layer, lines) in enumerate(layers.items()):
-        dxf.layers.new(layer, dxfattribs={"color": n})
+        dxf.layers.new(layer, dxfattribs={"color": colours[layer]})
         for line in lines:
             modelspace.add_line(*line, dxfattribs={"layer": layer})
 
     return dxf
 
 
-def unpack(modelspace):
+def unpack(drawing):
+    modelspace = drawing.modelspace()
+
     min_point = Vec2(float('inf'), float('inf'))
     max_point = Vec2(float('-inf'), float('-inf'))
 
     layers = defaultdict(list)
+    colours = {}
 
     for entity in modelspace:
+        if entity.dxf.layer not in colours:
+            if entity.dxf.layer in drawing.layers:
+                colours[entity.dxf.layer] = drawing.layers.get(entity.dxf.layer).dxf.color
+            else:
+                colours[entity.dxf.layer] = 0
+
         start = Vec2(*entity.dxf.start)
         end = Vec2(*entity.dxf.end)
 
@@ -43,4 +52,4 @@ def unpack(modelspace):
             line.start = line.start - centre
             line.end = line.end - centre
 
-    return layers
+    return layers, colours

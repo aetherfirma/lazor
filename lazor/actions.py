@@ -6,7 +6,7 @@ from lazor.analysis import join_lines, collate_lines, \
 from lazor.exceptions import AbortAction
 
 
-def autofix(layers, selections, update_statusbar, update_canvas, canvas):
+def autofix(layers, colours, selections, update_statusbar, update_canvas, canvas):
     if not layers:
         messagebox.showerror("Cannot perform autofix", "You must load a file first")
         raise AbortAction()
@@ -35,10 +35,10 @@ def autofix(layers, selections, update_statusbar, update_canvas, canvas):
         int((1-(post_fix/pre_fix))*100)
     ))
 
-    return layers
+    return layers, colours
 
 
-def optimise(layers, selections, update_statusbar, update_canvas, canvas):
+def optimise(layers, colours, selections, update_statusbar, update_canvas, canvas):
     if not layers:
         messagebox.showerror("Cannot perform optimisation", "You must load a file first")
         raise AbortAction()
@@ -67,10 +67,10 @@ def optimise(layers, selections, update_statusbar, update_canvas, canvas):
         int((1-(post_fix/pre_fix))*100)
     ))
 
-    return layers
+    return layers, colours
 
 
-def explode(layers, selections, update_statusbar, update_canvas, canvas):
+def explode(layers, colours, selections, update_statusbar, update_canvas, canvas):
     if not layers:
         messagebox.showerror("Cannot perform explode", "You must load a file first")
         raise AbortAction()
@@ -90,14 +90,16 @@ def explode(layers, selections, update_statusbar, update_canvas, canvas):
             layers[layer_name] = new_layers[0]
         else:
             for n, new_layer in enumerate(new_layers):
-                layers["{} {}".format(layer_name, n + 1)] = new_layer
+                new_name = "{} {}".format(layer_name, n + 1)
+                layers[new_name] = new_layer
+                colours[new_name] = colours[layer_name]
 
     update_statusbar("Created {} new layers".format(len(new_layers)))
 
-    return layers
+    return layers, colours
 
 
-def laser_estimation(layers, selections, update_statusbar, update_canvas, canvas):
+def laser_estimation(layers, colours, selections, update_statusbar, update_canvas, canvas):
     if not layers:
         messagebox.showerror("Cannot estimate laser time", "You must load a file first")
         raise AbortAction()
@@ -123,10 +125,10 @@ def laser_estimation(layers, selections, update_statusbar, update_canvas, canvas
         int(round(time, 0))
     ))
 
-    return layers
+    return layers, colours
 
 
-def laser_engraving_estimation(layers, selections, update_statusbar, update_canvas, canvas):
+def laser_engraving_estimation(layers, colours, selections, update_statusbar, update_canvas, canvas):
     if not layers:
         messagebox.showerror("Cannot estimate laser time", "You must load a file first")
         raise AbortAction()
@@ -150,10 +152,10 @@ def laser_engraving_estimation(layers, selections, update_statusbar, update_canv
         int(round(idle_time, 0))
     ))
 
-    return layers
+    return layers, colours
 
 
-def add_tabs(layers, selections, update_statusbar, update_canvas, canvas):
+def add_tabs(layers, colours, selections, update_statusbar, update_canvas, canvas):
     if not layers:
         messagebox.showerror("Cannot add tabs", "You must load a file first")
         raise AbortAction()
@@ -182,10 +184,10 @@ def add_tabs(layers, selections, update_statusbar, update_canvas, canvas):
     else:
         update_statusbar("Added tabs to {} layers".format(len(selections)))
 
-    return layers
+    return layers, colours
 
 
-def combine_layers(layers, selections, update_statusbar, update_canvas, canvas):
+def combine_layers(layers, colours, selections, update_statusbar, update_canvas, canvas):
     if not layers:
         messagebox.showerror("Cannot combine layers",
                              "You must load a file first")
@@ -204,13 +206,31 @@ def combine_layers(layers, selections, update_statusbar, update_canvas, canvas):
     for layer in selections:
         del layers[layer]
     layers[new_layer_name] = new_layer
+    colours[new_layer_name] = colours[selections[0]] if new_layer_name not in selections else colours[new_layer_name]
     update_statusbar("Merged {} layers into '{}'".format(len(selections),
                                                          new_layer_name))
 
-    return layers
+    return layers, colours
 
 
-def rename_layer(layers, selections, update_statusbar, update_canvas, canvas):
+def change_colour(layers, colours, selections, update_statusbar, update_canvas, canvas):
+    if not layers:
+        messagebox.showerror("Cannot change colours", "You must load a file first")
+        raise AbortAction()
+
+    if not selections:
+        messagebox.showerror("Cannot change colours", "You must select one or more layers to change")
+        raise AbortAction()
+
+    colour = simpledialog.askinteger("New colour code", "Please provide the DXF colour code", initialvalue=colours[selections[0]])
+
+    for selection in selections:
+        colours[selection] = colour
+
+    return layers, colours
+
+
+def rename_layer(layers, colours, selections, update_statusbar, update_canvas, canvas):
     if not layers:
         messagebox.showerror("Cannot rename layer",
                              "You must load a file first")
@@ -225,13 +245,14 @@ def rename_layer(layers, selections, update_statusbar, update_canvas, canvas):
     layer = layers[old_layer_name]
     del layers[old_layer_name]
     layers[new_layer_name] = layer
+    colours[new_layer_name] = colours[old_layer_name]
     update_statusbar(
         "Renamed '{}' to '{}'".format(old_layer_name, new_layer_name))
 
-    return layers
+    return layers, colours
 
 
-def delete_layers(layers, selections, update_statusbar, update_canvas, canvas):
+def delete_layers(layers, colours, selections, update_statusbar, update_canvas, canvas):
     if not layers:
         messagebox.showerror("Cannot delete layers",
                              "You must load a file first")
@@ -247,4 +268,4 @@ def delete_layers(layers, selections, update_statusbar, update_canvas, canvas):
     else:
         update_statusbar("Deleted {} layers".format(len(selections)))
 
-    return layers
+    return layers, colours
